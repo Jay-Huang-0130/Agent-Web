@@ -1,0 +1,42 @@
+[Unit]
+Description=Agent Web persistent Chromium container
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+TimeoutStopSec=30
+Delegate=yes
+
+ExecStartPre=-/usr/bin/podman rm --force --ignore agent-web
+ExecStart=/usr/bin/podman run \
+    --name agent-web \
+    --pull=never \
+    --log-driver=journald \
+    --network=pasta \
+    --publish 0.0.0.0:6901:6901/tcp \
+    --userns=keep-id \
+    --user __HOST_UID__:__HOST_GID__ \
+    --cap-drop=all \
+    --pids-limit=1024 \
+    --memory=6g \
+    --cpus=3.5 \
+    --shm-size=1g \
+    --tmpfs /tmp:rw,size=512m,mode=1777 \
+    --tmpfs /run:rw,size=128m,mode=700,uid=__HOST_UID__,gid=__HOST_GID__ \
+    --tmpfs /cache:rw,size=512m,mode=700,uid=__HOST_UID__,gid=__HOST_GID__ \
+    --volume %h/.local/share/agent-web/data/profile:/data/profile:rw \
+    --volume %h/.local/share/agent-web/data/downloads:/data/downloads:rw \
+    --volume %h/.local/share/agent-web/data/state:/state:rw \
+    --env AGENT_WEB_USERNAME=__WEB_USERNAME__ \
+    --env AGENT_WEB_HOSTNAME=__HOST_NAME__ \
+    --env AGENT_WEB_HOST_IP=__HOST_IP__ \
+    localhost/agent-web:latest
+ExecStop=/usr/bin/podman stop --ignore --time 20 agent-web
+ExecStopPost=-/usr/bin/podman rm --force --ignore agent-web
+
+[Install]
+WantedBy=default.target

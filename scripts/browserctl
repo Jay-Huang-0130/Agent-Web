@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if [[ -x "$HOME/.local/bin/agent-webctl" ]]; then
+    exec "$HOME/.local/bin/agent-webctl" "$@"
+fi
+
+echo "Agent Web is not installed. Run ./install.sh first." >&2
+exit 69

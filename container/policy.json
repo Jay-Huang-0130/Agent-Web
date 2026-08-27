@@ -1,0 +1,6 @@
+{
+  "BackgroundModeEnabled": false,
+  "DownloadDirectory": "/data/downloads",
+  "ProfilePickerOnStartupAvailability": 1,
+  "RestoreOnStartup": 5
+}
