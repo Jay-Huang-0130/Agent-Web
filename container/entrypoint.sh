@@ -7,13 +7,36 @@ umask 077
 : "${AGENT_WEB_HOST_IP:=}"
 
 state_dir=/state
+nginx_temp_dir=/tmp/agent-web-nginx
 password_file=$state_dir/password.init
 auth_file=$state_dir/htpasswd
 cert_file=$state_dir/tls.crt
 key_file=$state_dir/tls.key
 
-mkdir -p /run/agent-web/xdg /cache /data/profile /data/downloads "$state_dir"
-chmod 700 /run/agent-web /run/agent-web/xdg /cache /data/profile /data/downloads "$state_dir"
+mkdir -p \
+    /run/agent-web/xdg \
+    /cache \
+    /data/profile \
+    /data/downloads \
+    "$state_dir" \
+    "$nginx_temp_dir/client-body" \
+    "$nginx_temp_dir/proxy" \
+    "$nginx_temp_dir/fastcgi" \
+    "$nginx_temp_dir/uwsgi" \
+    "$nginx_temp_dir/scgi"
+chmod 700 \
+    /run/agent-web \
+    /run/agent-web/xdg \
+    /cache \
+    /data/profile \
+    /data/downloads \
+    "$state_dir" \
+    "$nginx_temp_dir" \
+    "$nginx_temp_dir/client-body" \
+    "$nginx_temp_dir/proxy" \
+    "$nginx_temp_dir/fastcgi" \
+    "$nginx_temp_dir/uwsgi" \
+    "$nginx_temp_dir/scgi"
 
 if [[ ! "$AGENT_WEB_USERNAME" =~ ^[A-Za-z0-9._-]+$ ]]; then
     echo "Agent Web: invalid web username." >&2
