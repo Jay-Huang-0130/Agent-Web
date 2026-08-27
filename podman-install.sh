@@ -207,6 +207,7 @@ mv "$config_tmp" "$config_file"
 echo "Building the isolated Chromium image. This can take several minutes..."
 podman build \
     --pull=always \
+    --format docker \
     --tag "$image_name" \
     --build-arg "BROWSER_UID=$(id -u)" \
     --build-arg "BROWSER_GID=$(id -g)" \

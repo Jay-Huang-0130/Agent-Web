@@ -26,8 +26,7 @@ ExecStart=/usr/bin/podman run \
     --cpus=3.5 \
     --shm-size=1g \
     --tmpfs /tmp:rw,size=512m,mode=1777 \
-    --tmpfs /run:rw,size=128m,mode=700,uid=__HOST_UID__,gid=__HOST_GID__ \
-    --tmpfs /cache:rw,size=512m,mode=700,uid=__HOST_UID__,gid=__HOST_GID__ \
+    --tmpfs /run:rw,size=128m,mode=1777 \
     --volume %h/.local/share/agent-web/data/profile:/data/profile:rw \
     --volume %h/.local/share/agent-web/data/downloads:/data/downloads:rw \
     --volume %h/.local/share/agent-web/data/state:/state:rw \

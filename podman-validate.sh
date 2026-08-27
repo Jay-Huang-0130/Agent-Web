@@ -75,8 +75,14 @@ done
 grep -q '^USER browser$' Containerfile
 grep -q -- '--userns=keep-id' systemd/agent-web.service.in
 grep -q -- '--cap-drop=all' systemd/agent-web.service.in
+grep -q -- '--format docker' podman-install.sh
 grep -q '127.0.0.1:6080' container/nginx.conf
 grep -q '127.0.0.1:5901' container/entrypoint.sh
+
+if grep -E -- '--tmpfs .*[,](uid|gid)=' systemd/agent-web.service.in; then
+    echo "Podman --tmpfs must not use unsupported uid/gid mount options." >&2
+    exit 1
+fi
 
 if grep -R -n -- '--no-sandbox' Containerfile container scripts systemd; then
     echo "Chromium sandbox must not be disabled." >&2
