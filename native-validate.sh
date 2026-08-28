@@ -78,6 +78,9 @@ grep -q 'at least 4 characters' native-install.sh
 grep -q 'at least 4 characters' scripts/native-agent-webctl
 grep -q '\${#first_password}" -lt 4' native-install.sh
 grep -q '\${#first_password}" -lt 4' scripts/native-agent-webctl
+grep -q -- '--non-interactive' native-install.sh
+grep -q -- '--password-file' native-install.sh
+grep -q 'install_password_from_file' native-install.sh
 grep -q '"DownloadDirectory": "/var/lib/agent-web/downloads"' policy/agent-web.json
 
 if grep -R -n -- '--no-sandbox' \

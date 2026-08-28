@@ -43,6 +43,17 @@ cd Agent-Web
 ./install.sh
 ~~~
 
+供上層安裝器或 Agent 平台進行無人值守部署時，請使用只允許目前使用者讀取的密碼檔，不要把明文密碼放在命令列：
+
+~~~bash
+./install.sh \
+  --non-interactive \
+  --username browser \
+  --password-file /secure/path/agent-web-password
+~~~
+
+`--password-file` 的內容必須至少 4 個字元。Agent-OS 等上層系統可以用這個介面安裝 Agent Web，再以 `agent-webctl info` 驗證服務。
+
 ## 從舊容器版切換
 
 新版安裝器會自動：

@@ -11,6 +11,7 @@
 - 人類可用的 HTTPS/noVNC 操作入口
 - systemd 生命週期管理
 - 無秘密的能力發現指令
+- 使用 `--password-file` 的非互動安裝介面
 
 目前穩定版尚未提供：
 
@@ -21,6 +22,19 @@
 - 多個 Agent 同時操作的鎖定機制
 
 這是刻意的安全預設。安裝完成不代表任何程式都能直接取得瀏覽器控制權。
+
+### 上層平台自動安裝
+
+Agent-OS 或其他平台可以先建立權限為 `0600` 的暫存密碼檔，再執行：
+
+```bash
+./install.sh \
+  --non-interactive \
+  --username browser \
+  --password-file /run/private/agent-web-password
+```
+
+安裝器不接受 `--password 明文`，避免秘密出現在程序參數、Shell history 或安裝日誌。上層平台應在安裝完成後立即刪除暫存密碼檔，並以 `agent-webctl info` 驗證 `READY=true`。
 
 ## 1. Agent 如何發現 Agent Web
 

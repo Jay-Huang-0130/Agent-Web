@@ -13,12 +13,21 @@ controller_file=/usr/local/bin/agent-webctl
 
 update_only=0
 reset_password=0
+non_interactive=0
+requested_username=
+password_file=
 
 usage() {
     cat <<'EOF'
-Usage: ./install.sh [--update] [--reset-password]
+Usage: ./install.sh [--update] [--reset-password] [--non-interactive]
+                    [--username NAME] [--password-file PATH]
 
 Installs Agent Web directly on Debian as hardened systemd services.
+
+For unattended first-time installation, use --non-interactive with
+--password-file. The password file must contain a password of at least
+4 characters. Passing a plaintext password as a command argument is not
+supported.
 EOF
 }
 
@@ -29,6 +38,26 @@ while [[ $# -gt 0 ]]; do
             ;;
         --reset-password)
             reset_password=1
+            ;;
+        --non-interactive)
+            non_interactive=1
+            ;;
+        --username)
+            [[ $# -ge 2 ]] || {
+                echo "--username requires a value." >&2
+                exit 64
+            }
+            requested_username=$2
+            shift
+            ;;
+        --password-file)
+            [[ $# -ge 2 ]] || {
+                echo "--password-file requires a path." >&2
+                exit 64
+            }
+            password_file=$2
+            reset_password=1
+            shift
             ;;
         -h|--help)
             usage
@@ -91,6 +120,16 @@ if [[ -r /etc/agent-web/controller.env ]]; then
 elif [[ -r "$old_config_file" ]]; then
     # shellcheck disable=SC1090
     source "$old_config_file"
+fi
+if [[ -n "$requested_username" ]]; then
+    if [[ ! "$requested_username" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        echo "Use only letters, numbers, dot, underscore, or dash for --username." >&2
+        exit 64
+    fi
+    if [[ "$requested_username" != "$AGENT_WEB_USERNAME" ]]; then
+        reset_password=1
+    fi
+    AGENT_WEB_USERNAME=$requested_username
 fi
 AGENT_WEB_SOURCE_DIR=$project_root
 
@@ -271,8 +310,44 @@ prompt_for_password() {
     second_password=
 }
 
+install_password_from_file() {
+    local first_password password_tmp
+    if [[ -z "$password_file" || ! -r "$password_file" ]]; then
+        echo "The password file is not readable: ${password_file:-unset}" >&2
+        exit 66
+    fi
+
+    first_password=$(<"$password_file")
+    if [[ "${#first_password}" -lt 4 ]]; then
+        echo "The password file must contain at least 4 characters." >&2
+        exit 64
+    fi
+    if [[ "$first_password" == *$'\n'* || "$first_password" == *$'\r'* ]]; then
+        echo "The password file must contain exactly one password line." >&2
+        exit 64
+    fi
+
+    password_tmp=$(mktemp)
+    trap 'rm -f -- "$password_tmp"' EXIT
+    printf '%s\n' "$first_password" |
+        htpasswd -niB "$AGENT_WEB_USERNAME" >"$password_tmp"
+    first_password=
+    sudo install -o agent-web-web -g agent-web-web -m 0600 \
+        "$password_tmp" \
+        "$native_config_root/htpasswd"
+    rm -f -- "$password_tmp"
+    trap - EXIT
+}
+
 if [[ $reset_password -eq 1 || ! -s "$native_config_root/htpasswd" ]]; then
-    prompt_for_password
+    if [[ -n "$password_file" ]]; then
+        install_password_from_file
+    elif [[ $non_interactive -eq 1 ]]; then
+        echo "Unattended setup requires --password-file on first install or password reset." >&2
+        exit 64
+    else
+        prompt_for_password
+    fi
 fi
 
 host_name=$(hostname -s)
