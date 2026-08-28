@@ -373,6 +373,7 @@ for unit_name in \
         "/etc/systemd/system/$unit_name"
 done
 
+sudo install -d -o agent-web-web -g agent-web-web -m 0700 /run/agent-web-web
 sudo nginx -t -c "$native_config_root/nginx.conf"
 sudo systemctl daemon-reload
 sudo systemctl enable agent-web.target

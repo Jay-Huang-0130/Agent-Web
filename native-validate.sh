@@ -66,6 +66,7 @@ grep -q '^User=agent-web-web$' systemd/agent-web-web.service
 grep -q '127.0.0.1:6080 127.0.0.1:5901' systemd/agent-web-novnc.service
 grep -q 'listen 0.0.0.0:6901 ssl;' nginx/agent-web.conf
 grep -q 'auth_basic_user_file /etc/agent-web/htpasswd;' nginx/agent-web.conf
+grep -q 'install -d -o agent-web-web -g agent-web-web -m 0700 /run/agent-web-web' native-install.sh
 grep -q '"DownloadDirectory": "/var/lib/agent-web/downloads"' policy/agent-web.json
 
 if grep -R -n -- '--no-sandbox' \
