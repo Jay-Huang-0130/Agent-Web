@@ -1,0 +1,37 @@
+[Unit]
+Description=Agent Web Chromium desktop
+PartOf=agent-web.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=agent-web
+Group=agent-web
+Environment=HOME=/var/lib/agent-web
+Environment=DISPLAY=:1
+Environment=XAUTHORITY=/run/agent-web/Xauthority
+Environment=XDG_RUNTIME_DIR=/run/agent-web/xdg
+EnvironmentFile=-/etc/agent-web/browser.env
+RuntimeDirectory=agent-web
+RuntimeDirectoryMode=0700
+ExecStart=/usr/local/lib/agent-web/browser-session.sh
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+LockPersonality=yes
+RestrictRealtime=yes
+ReadWritePaths=/var/lib/agent-web /var/cache/agent-web/chromium /run/agent-web
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+TasksMax=1024
+MemoryMax=6G
+CPUQuota=350%

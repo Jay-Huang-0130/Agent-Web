@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+: "${DISPLAY:=:1}"
+: "${XAUTHORITY:=/run/agent-web/Xauthority}"
+: "${XDG_RUNTIME_DIR:=/run/agent-web/xdg}"
 : "${AGENT_WEB_WIDTH:=1280}"
 : "${AGENT_WEB_HEIGHT:=720}"
 : "${AGENT_WEB_DEPTH:=24}"
 : "${AGENT_WEB_CACHE_SIZE:=536870912}"
 : "${AGENT_WEB_LANG:=zh-TW}"
+: "${AGENT_WEB_PROFILE_DIR:=/var/lib/agent-web/profile}"
+: "${AGENT_WEB_DOWNLOAD_DIR:=/var/lib/agent-web/downloads}"
+: "${AGENT_WEB_CACHE_DIR:=/var/cache/agent-web}"
 
 for numeric_value in \
     "$AGENT_WEB_WIDTH" \
@@ -18,12 +24,27 @@ for numeric_value in \
     fi
 done
 
+mkdir -p \
+    "$XDG_RUNTIME_DIR" \
+    "$AGENT_WEB_PROFILE_DIR" \
+    "$AGENT_WEB_DOWNLOAD_DIR" \
+    "$AGENT_WEB_CACHE_DIR"
+chmod 700 \
+    "$XDG_RUNTIME_DIR" \
+    "$AGENT_WEB_PROFILE_DIR" \
+    "$AGENT_WEB_DOWNLOAD_DIR" \
+    "$AGENT_WEB_CACHE_DIR"
+
+rm -f \
+    "$AGENT_WEB_PROFILE_DIR/SingletonCookie" \
+    "$AGENT_WEB_PROFILE_DIR/SingletonLock" \
+    "$AGENT_WEB_PROFILE_DIR/SingletonSocket"
 rm -f "$XAUTHORITY"
-xauth -f "$XAUTHORITY" add "$DISPLAY" MIT-MAGIC-COOKIE-1 "$(mcookie)"
+xauth -f "$XAUTHORITY" add "$DISPLAY" MIT-MAGIC-COOKIE-1 "$(openssl rand -hex 16)"
 chmod 600 "$XAUTHORITY"
 
-vnc_pid=""
-desktop_pid=""
+vnc_pid=
+desktop_pid=
 
 cleanup() {
     trap - EXIT INT TERM HUP
@@ -57,7 +78,7 @@ for _ in $(seq 1 100); do
     sleep 0.1
 done
 
-[[ "$display_ready" -eq 1 ]] || {
+[[ $display_ready -eq 1 ]] || {
     echo "Agent Web: X display did not become ready." >&2
     exit 1
 }
@@ -74,8 +95,8 @@ dbus-run-session -- bash -c '
     while kill -0 "$wm_pid" 2>/dev/null; do
         set +e
         chromium \
-            --user-data-dir=/data/profile \
-            --disk-cache-dir=/cache \
+            --user-data-dir="$AGENT_WEB_PROFILE_DIR" \
+            --disk-cache-dir="$AGENT_WEB_CACHE_DIR" \
             --disk-cache-size="$AGENT_WEB_CACHE_SIZE" \
             --ozone-platform=x11 \
             --password-store=basic \

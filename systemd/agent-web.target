@@ -1,0 +1,7 @@
+[Unit]
+Description=Agent Web native persistent browser
+Wants=network-online.target agent-web-browser.service agent-web-novnc.service agent-web-web.service
+After=network-online.target
+
+[Install]
+WantedBy=multi-user.target

@@ -2,4 +2,4 @@
 set -Eeuo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec "$script_dir/podman-uninstall.sh" "$@"
+exec "$script_dir/native-uninstall.sh" "$@"

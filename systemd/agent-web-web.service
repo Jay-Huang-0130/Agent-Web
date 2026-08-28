@@ -1,0 +1,34 @@
+[Unit]
+Description=Agent Web HTTPS gateway
+PartOf=agent-web.target
+After=agent-web-novnc.service
+
+[Service]
+Type=simple
+User=agent-web-web
+Group=agent-web-web
+RuntimeDirectory=agent-web-web
+RuntimeDirectoryMode=0700
+ExecStartPre=/usr/sbin/nginx -t -c /etc/agent-web/nginx.conf
+ExecStart=/usr/sbin/nginx -c /etc/agent-web/nginx.conf -g "daemon off;"
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+LockPersonality=yes
+RestrictRealtime=yes
+CapabilityBoundingSet=
+ReadWritePaths=/var/cache/agent-web/nginx /run/agent-web-web
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+TasksMax=256
+MemoryMax=512M

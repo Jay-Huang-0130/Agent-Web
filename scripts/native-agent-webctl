@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+config_file=/etc/agent-web/controller.env
+target_name=agent-web.target
+service_names=(
+    agent-web-browser.service
+    agent-web-novnc.service
+    agent-web-web.service
+)
+
+if [[ ! -r "$config_file" ]]; then
+    echo "Agent Web native services are not installed." >&2
+    exit 69
+fi
+
+# shellcheck disable=SC1091
+source "$config_file"
+
+access_url() {
+    if [[ -n "${AGENT_WEB_HOST_IP:-}" ]]; then
+        printf 'https://%s:6901/\n' "$AGENT_WEB_HOST_IP"
+    else
+        printf 'https://%s:6901/\n' "${AGENT_WEB_HOSTNAME:-agent-web}"
+    fi
+}
+
+wait_until_ready() {
+    local http_code
+    for _ in $(seq 1 90); do
+        http_code=$(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1:6901/ || true)
+        [[ "$http_code" == 401 ]] && return 0
+        sleep 1
+    done
+    return 1
+}
+
+prompt_password() {
+    local first_password second_password
+    if [[ ! -r /dev/tty || ! -w /dev/tty ]]; then
+        echo "A terminal is required to change the password." >&2
+        exit 74
+    fi
+
+    while true; do
+        read -r -s -p "New web password (at least 12 characters): " first_password </dev/tty
+        printf '\n' >/dev/tty
+        read -r -s -p "Confirm web password: " second_password </dev/tty
+        printf '\n' >/dev/tty
+
+        if [[ "${#first_password}" -lt 12 ]]; then
+            echo "The password must contain at least 12 characters." >/dev/tty
+        elif [[ "$first_password" != "$second_password" ]]; then
+            echo "The passwords do not match." >/dev/tty
+        elif [[ "$first_password" == *$'\n'* || "$first_password" == *$'\r'* ]]; then
+            echo "The password cannot contain a newline." >/dev/tty
+        else
+            break
+        fi
+    done
+
+    printf '%s' "$first_password"
+}
+
+set_password() {
+    local first_password password_tmp
+    first_password=$(prompt_password)
+    password_tmp=$(mktemp)
+    trap 'rm -f -- "$password_tmp"' EXIT
+    printf '%s\n' "$first_password" |
+        htpasswd -niB "$AGENT_WEB_USERNAME" >"$password_tmp"
+    first_password=
+    sudo install -o agent-web-web -g agent-web-web -m 0600 \
+        "$password_tmp" \
+        /etc/agent-web/htpasswd
+    rm -f -- "$password_tmp"
+    trap - EXIT
+    sudo systemctl restart agent-web-web.service
+    wait_until_ready || {
+        echo "Password changed, but the web service did not become healthy." >&2
+        exit 70
+    }
+    echo "Web password changed."
+}
+
+renew_certificate() {
+    local san certificate_tmp_dir
+    certificate_tmp_dir=$(mktemp -d)
+    trap 'rm -rf -- "$certificate_tmp_dir"' EXIT
+    san="DNS:${AGENT_WEB_HOSTNAME:-agent-web}"
+    if [[ "${AGENT_WEB_HOST_IP:-}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        san="$san,IP:$AGENT_WEB_HOST_IP"
+    fi
+
+    openssl req \
+        -x509 \
+        -nodes \
+        -newkey rsa:3072 \
+        -sha256 \
+        -days 825 \
+        -subj "/CN=${AGENT_WEB_HOSTNAME:-agent-web}" \
+        -addext "subjectAltName=$san" \
+        -keyout "$certificate_tmp_dir/tls.key" \
+        -out "$certificate_tmp_dir/tls.crt"
+    sudo install -o agent-web-web -g agent-web-web -m 0600 \
+        "$certificate_tmp_dir/tls.key" \
+        /etc/agent-web/tls.key
+    sudo install -o agent-web-web -g agent-web-web -m 0644 \
+        "$certificate_tmp_dir/tls.crt" \
+        /etc/agent-web/tls.crt
+    rm -rf -- "$certificate_tmp_dir"
+    trap - EXIT
+    sudo systemctl restart agent-web-web.service
+    wait_until_ready || {
+        echo "Certificate renewed, but the web service did not become healthy." >&2
+        exit 70
+    }
+    echo "Private TLS certificate renewed."
+}
+
+show_status() {
+    local http_code
+    sudo systemctl --no-pager --full status "$target_name" "${service_names[@]}" || true
+    echo
+    http_code=$(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1:6901/ || true)
+    echo "HTTPS check: $http_code (401 means healthy and authentication is active)"
+    echo "URL: $(access_url)"
+    echo "Profile: /var/lib/agent-web/profile"
+    echo "Downloads: /var/lib/agent-web/downloads"
+}
+
+usage() {
+    cat <<'EOF'
+Usage: agent-webctl COMMAND
+
+Commands:
+  status             Show service and HTTPS health
+  logs               Follow Chromium, noVNC, and HTTPS logs
+  start              Start Agent Web
+  stop               Stop Agent Web (profile and cookies remain)
+  restart            Restart Agent Web
+  set-password       Replace the web login password
+  renew-certificate  Generate a new private TLS certificate
+  update             Pull the latest Git commit and reinstall native services
+  url                Print the browser URL
+EOF
+}
+
+command_name=${1:-status}
+case "$command_name" in
+    status)
+        show_status
+        ;;
+    logs)
+        exec sudo journalctl \
+            -u agent-web-browser.service \
+            -u agent-web-novnc.service \
+            -u agent-web-web.service \
+            -f
+        ;;
+    start)
+        sudo systemctl start "$target_name"
+        echo "Agent Web started: $(access_url)"
+        ;;
+    stop)
+        sudo systemctl stop "$target_name"
+        echo "Agent Web stopped. Browser data was preserved."
+        ;;
+    restart)
+        sudo systemctl restart "$target_name"
+        echo "Agent Web restarted: $(access_url)"
+        ;;
+    set-password)
+        set_password
+        ;;
+    renew-certificate)
+        renew_certificate
+        ;;
+    update)
+        if [[ ! -d "${AGENT_WEB_SOURCE_DIR:-}/.git" ]]; then
+            echo "The installed source is not a Git checkout: ${AGENT_WEB_SOURCE_DIR:-unset}" >&2
+            exit 66
+        fi
+        git -C "$AGENT_WEB_SOURCE_DIR" pull --ff-only
+        exec "$AGENT_WEB_SOURCE_DIR/install.sh" --update
+        ;;
+    url)
+        access_url
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        echo "Unknown command: $command_name" >&2
+        usage >&2
+        exit 64
+        ;;
+esac
