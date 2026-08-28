@@ -7,6 +7,10 @@ cd "$project_root"
 required_files=(
     .gitattributes
     README.md
+    docs/AGENT-INTEGRATION.md
+    docs/ARCHITECTURE.md
+    docs/TROUBLESHOOTING.md
+    docs/USER-GUIDE.md
     bootstrap.sh
     install.sh
     native-install.sh
@@ -68,6 +72,8 @@ grep -q 'listen 0.0.0.0:6901 ssl;' nginx/agent-web.conf
 grep -q '^error_log stderr info;$' nginx/agent-web.conf
 grep -q 'auth_basic_user_file /etc/agent-web/htpasswd;' nginx/agent-web.conf
 grep -q 'install -d -o agent-web-web -g agent-web-web -m 0700 /run/agent-web-web' native-install.sh
+grep -q '6901/vnc.html' native-install.sh
+grep -q '^AGENT_WEB_INFO_VERSION=1$' scripts/native-agent-webctl
 grep -q '"DownloadDirectory": "/var/lib/agent-web/downloads"' policy/agent-web.json
 
 if grep -R -n -- '--no-sandbox' \

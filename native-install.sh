@@ -382,7 +382,7 @@ sudo systemctl restart agent-web.target
 echo "Waiting for Agent Web to become ready..."
 healthy=0
 for _ in $(seq 1 90); do
-    http_code=$(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1:6901/ || true)
+    http_code=$(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1:6901/vnc.html || true)
     if [[ "$http_code" == 401 ]]; then
         healthy=1
         break
@@ -414,5 +414,5 @@ else
 fi
 echo "Open: $access_url"
 echo "The first visit will show a private self-signed certificate warning."
-echo "Manage it with: agent-webctl status|logs|restart|stop|start|set-password|update"
+echo "Manage it with: agent-webctl status|info|logs|restart|stop|start|set-password|update"
 echo "The old Podman packages remain installed, but Agent Web no longer uses them."

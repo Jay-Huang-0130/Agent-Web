@@ -86,6 +86,7 @@ VNC 與 noVNC 後端只監聽 `127.0.0.1`。只有 HTTPS 入口監聽內網介�
 
 ~~~bash
 agent-webctl status
+agent-webctl info
 agent-webctl logs
 agent-webctl restart
 agent-webctl stop
@@ -142,3 +143,27 @@ cd ~/.local/share/agent-web/source
 ~~~
 
 驗證器會檢查 Bash、JSON、LF 換行、systemd 帳號、loopback VNC/noVNC、HTTPS 驗證及 Chromium sandbox 設定。
+
+## Agent 整合定位
+
+Agent Web 目前是「持續運行的瀏覽器 + 人類可操作的 noVNC 介面」，不會預設開放高權限 CDP 或自動化 API。外部程式可以先執行：
+
+~~~bash
+agent-webctl info
+~~~
+
+這會輸出不含密碼、Cookie、Token 或私鑰的 `KEY=VALUE` 能力資訊，包括服務是否正常、人類操作網址，以及 Agent 控制介面是否可用。現在會如實回報：
+
+~~~text
+AGENT_CONTROL_AVAILABLE=false
+AGENT_CONTROL_PROTOCOL=none
+~~~
+
+未來建議使用雙通道架構：人類透過 HTTPS/noVNC 觀看與接管；Agent 透過只允許本機存取的 Adapter、CDP 或 Chrome Extension Relay 精確操作同一個 Chromium。禁止直接把原始 CDP 連接埠暴露到內網或 Internet。
+
+## 完整文件
+
+- [使用者操作手冊](docs/USER-GUIDE.md)：安裝、登入、管理、更新、備份與移除。
+- [系統架構](docs/ARCHITECTURE.md)：元件、服務、資料流、隔離與安全邊界。
+- [Agent 整合指南](docs/AGENT-INTEGRATION.md)：能力發現、通用 Adapter、OpenClaw、自製 Agent 與版本路線。
+- [故障排查](docs/TROUBLESHOOTING.md)：`400`、`401`、`302`、服務失敗及日誌判讀。
