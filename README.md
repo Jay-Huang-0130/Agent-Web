@@ -25,12 +25,14 @@ curl -fsSL https://raw.githubusercontent.com/Jay-Huang-0130/Agent-Web/main/boots
 
 1. 安裝 Chromium、TigerVNC、noVNC、Openbox 與 Nginx。
 2. 建立 `agent-web` 與 `agent-web-web` 無登入系統帳號。
-3. 詢問網頁登入帳號和至少 12 字元的密碼。
+3. 詢問網頁登入帳號和至少 4 字元的密碼。
 4. 產生私人自簽 TLS 憑證。
 5. 建立並啟用 systemd 系統服務。
 6. 顯示網址，例如 `https://192.168.1.50:6901/`。
 
 第一次開啟會看到憑證警告。確認網址是自己的 Pi 後即可繼續，再輸入安裝時設定的帳號密碼。
+
+系統允許 4 字元以上的密碼，方便私人內網快速使用；4 字元密碼很容易被猜中，若內網還有其他裝置或使用者，仍建議使用 12 字元以上的密碼。
 
 也可以先檢查程式碼：
 

@@ -74,6 +74,10 @@ grep -q 'auth_basic_user_file /etc/agent-web/htpasswd;' nginx/agent-web.conf
 grep -q 'install -d -o agent-web-web -g agent-web-web -m 0700 /run/agent-web-web' native-install.sh
 grep -q '6901/vnc.html' native-install.sh
 grep -q '^AGENT_WEB_INFO_VERSION=1$' scripts/native-agent-webctl
+grep -q 'at least 4 characters' native-install.sh
+grep -q 'at least 4 characters' scripts/native-agent-webctl
+grep -q '\${#first_password}" -lt 4' native-install.sh
+grep -q '\${#first_password}" -lt 4' scripts/native-agent-webctl
 grep -q '"DownloadDirectory": "/var/lib/agent-web/downloads"' policy/agent-web.json
 
 if grep -R -n -- '--no-sandbox' \

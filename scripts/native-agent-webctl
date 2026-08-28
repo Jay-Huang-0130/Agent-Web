@@ -44,13 +44,13 @@ prompt_password() {
     fi
 
     while true; do
-        read -r -s -p "New web password (at least 12 characters): " first_password </dev/tty
+        read -r -s -p "New web password (at least 4 characters): " first_password </dev/tty
         printf '\n' >/dev/tty
         read -r -s -p "Confirm web password: " second_password </dev/tty
         printf '\n' >/dev/tty
 
-        if [[ "${#first_password}" -lt 12 ]]; then
-            echo "The password must contain at least 12 characters." >/dev/tty
+        if [[ "${#first_password}" -lt 4 ]]; then
+            echo "The password must contain at least 4 characters." >/dev/tty
         elif [[ "$first_password" != "$second_password" ]]; then
             echo "The passwords do not match." >/dev/tty
         elif [[ "$first_password" == *$'\n'* || "$first_password" == *$'\r'* ]]; then

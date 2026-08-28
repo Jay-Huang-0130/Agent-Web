@@ -38,7 +38,7 @@ curl -fsSL https://raw.githubusercontent.com/Jay-Huang-0130/Agent-Web/main/boots
 2. 把專案下載到 `~/.local/share/agent-web/source`。
 3. 安裝 Chromium、TigerVNC、noVNC、Openbox、Nginx 等 Debian 套件。
 4. 建立 `agent-web` 與 `agent-web-web` 專用系統帳號。
-5. 詢問網頁登入名稱與至少 12 字元的密碼。
+5. 詢問網頁登入名稱與至少 4 字元的密碼。
 6. 產生私人自簽 TLS 憑證。
 7. 安裝並啟動 systemd 服務。
 8. 等待 HTTPS、驗證頁面及後端服務就緒。
@@ -130,7 +130,7 @@ sudo journalctl \
 agent-webctl set-password
 ```
 
-密碼必須至少 12 個字元。修改完成後 HTTPS 服務會重新啟動，Chromium 不會因此清除登入狀態。
+密碼必須至少 4 個字元。修改完成後 HTTPS 服務會重新啟動，Chromium 不會因此清除登入狀態。4 字元只適合可信任的私人內網；若內網還有其他使用者或不受信任裝置，建議使用 12 字元以上的密碼。
 
 ### 更新憑證及程式
 
