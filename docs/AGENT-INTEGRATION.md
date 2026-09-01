@@ -60,6 +60,9 @@ HUMAN_URL=https://192.168.31.75:6901/
 HUMAN_CONTROL_PROTOCOL=novnc
 AGENT_CONTROL_AVAILABLE=false
 AGENT_CONTROL_PROTOCOL=none
+OPENAI_OAUTH_BROWSER_AVAILABLE=true
+OPENAI_OAUTH_BROWSER_PROTOCOL=agent-web-openai-oauth-v1
+OPENAI_OAUTH_BROWSER_SOCKET=/run/agent-web-oauth/open.sock
 BROWSER_SERVICE=active
 NOVNC_SERVICE=active
 WEB_SERVICE=active
@@ -74,6 +77,8 @@ DOWNLOAD_DIR=/var/lib/agent-web/downloads
 - 使用 `AGENT_WEB_INFO_VERSION` 判斷格式版本。
 - `READY=true` 才代表三個服務及 HTTPS 驗證都正常。
 - `AGENT_CONTROL_AVAILABLE=false` 時，不得假設有 CDP 或自動化 API。
+- `OPENAI_OAUTH_BROWSER_AVAILABLE=true` 只代表可以把官方 OpenAI OAuth URL 開到既有 Chromium，不代表一般網頁控制已啟用。
+- OAuth socket 為 `0600`，只有安裝 Agent Web 的登入使用者可以連線；接收端仍會再次限制官方 OpenAI/ChatGPT HTTPS 網域。
 - 此輸出永遠不應包含密碼、Cookie、Token 或 TLS 私鑰。
 
 Shell 探測範例：

@@ -1,6 +1,6 @@
 [Unit]
 Description=Agent Web native persistent browser
-Wants=network-online.target agent-web-browser.service agent-web-novnc.service agent-web-web.service
+Wants=network-online.target agent-web-browser.service agent-web-novnc.service agent-web-web.service agent-web-oauth.socket
 After=network-online.target
 
 [Install]

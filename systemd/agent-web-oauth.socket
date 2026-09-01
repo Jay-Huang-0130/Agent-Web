@@ -1,0 +1,15 @@
+[Unit]
+Description=Agent Web OpenAI OAuth browser bridge
+PartOf=agent-web.target
+
+[Socket]
+ListenStream=/run/agent-web-oauth/open.sock
+SocketUser=__AGENT_WEB_CONTROLLER_USER__
+SocketMode=0600
+DirectoryMode=0755
+RemoveOnStop=yes
+Accept=yes
+MaxConnections=8
+
+[Install]
+WantedBy=agent-web.target

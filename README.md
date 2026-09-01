@@ -170,9 +170,12 @@ agent-webctl info
 ~~~text
 AGENT_CONTROL_AVAILABLE=false
 AGENT_CONTROL_PROTOCOL=none
+OPENAI_OAUTH_BROWSER_AVAILABLE=true
+OPENAI_OAUTH_BROWSER_PROTOCOL=agent-web-openai-oauth-v1
+OPENAI_OAUTH_BROWSER_SOCKET=/run/agent-web-oauth/open.sock
 ~~~
 
-未來建議使用雙通道架構：人類透過 HTTPS/noVNC 觀看與接管；Agent 透過只允許本機存取的 Adapter、CDP 或 Chrome Extension Relay 精確操作同一個 Chromium。禁止直接把原始 CDP 連接埠暴露到內網或 Internet。
+OAuth bridge 是特別為遠端／無螢幕 ChatGPT 登入提供的窄介面。Socket 只允許安裝 Agent Web 的登入使用者連線，且只接受 `auth.openai.com` 或 `chatgpt.com` 的 HTTPS URL；它不是通用瀏覽器控制 API。未來建議使用雙通道架構：人類透過 HTTPS/noVNC 觀看與接管；Agent 透過只允許本機存取的 Adapter、CDP 或 Chrome Extension Relay 精確操作同一個 Chromium。禁止直接把原始 CDP 連接埠暴露到內網或 Internet。
 
 ## 完整文件
 

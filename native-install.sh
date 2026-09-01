@@ -99,9 +99,12 @@ required_project_files=(
     policy/agent-web.json
     scripts/native-agent-webctl
     scripts/browser-session.sh
+    scripts/open-openai-oauth.sh
     systemd/agent-web.target
     systemd/agent-web-browser.service
     systemd/agent-web-novnc.service
+    systemd/agent-web-oauth.socket
+    systemd/agent-web-oauth@.service
     systemd/agent-web-web.service
 )
 for relative_file in "${required_project_files[@]}"; do
@@ -426,6 +429,9 @@ sudo install -o root -g root -m 0755 \
     "$project_root/scripts/browser-session.sh" \
     /usr/local/lib/agent-web/browser-session.sh
 sudo install -o root -g root -m 0755 \
+    "$project_root/scripts/open-openai-oauth.sh" \
+    /usr/local/lib/agent-web/open-openai-oauth
+sudo install -o root -g root -m 0755 \
     "$project_root/scripts/native-agent-webctl" \
     "$controller_file"
 install -d -m 0755 "$HOME/.local/bin"
@@ -438,10 +444,25 @@ sudo install -o root -g root -m 0644 \
 sudo install -o root -g root -m 0644 \
     "$project_root/nginx/agent-web.conf" \
     "$native_config_root/nginx.conf"
+install_user=$(id -un)
+if [[ ! "$install_user" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+    echo "Cannot create the OAuth browser socket for user: $install_user" >&2
+    exit 64
+fi
+oauth_socket_tmp=$(mktemp)
+trap 'rm -f -- "$oauth_socket_tmp"' EXIT
+sed "s/__AGENT_WEB_CONTROLLER_USER__/$install_user/g" \
+    "$project_root/systemd/agent-web-oauth.socket" >"$oauth_socket_tmp"
+sudo install -o root -g root -m 0644 \
+    "$oauth_socket_tmp" \
+    /etc/systemd/system/agent-web-oauth.socket
+rm -f -- "$oauth_socket_tmp"
+trap - EXIT
 for unit_name in \
     agent-web.target \
     agent-web-browser.service \
     agent-web-novnc.service \
+    agent-web-oauth@.service \
     agent-web-web.service; do
     sudo install -o root -g root -m 0644 \
         "$project_root/systemd/$unit_name" \

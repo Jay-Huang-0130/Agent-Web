@@ -28,8 +28,11 @@ sudo rm -f \
     /etc/systemd/system/agent-web.target \
     /etc/systemd/system/agent-web-browser.service \
     /etc/systemd/system/agent-web-novnc.service \
+    /etc/systemd/system/agent-web-oauth.socket \
+    /etc/systemd/system/agent-web-oauth@.service \
     /etc/systemd/system/agent-web-web.service \
     /usr/local/lib/agent-web/browser-session.sh \
+    /usr/local/lib/agent-web/open-openai-oauth \
     /usr/local/bin/agent-webctl \
     /etc/chromium/policies/managed/agent-web.json
 rm -f "$HOME/.local/bin/agent-webctl"

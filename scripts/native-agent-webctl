@@ -8,6 +8,7 @@ service_names=(
     agent-web-browser.service
     agent-web-novnc.service
     agent-web-web.service
+    agent-web-oauth.socket
 )
 
 if [[ ! -r "$config_file" ]]; then
@@ -131,16 +132,21 @@ show_status() {
 }
 
 show_info() {
-    local browser_state novnc_state web_state http_code ready
+    local browser_state novnc_state web_state oauth_state http_code ready oauth_available
     browser_state=$(systemctl is-active agent-web-browser.service 2>/dev/null || true)
     novnc_state=$(systemctl is-active agent-web-novnc.service 2>/dev/null || true)
     web_state=$(systemctl is-active agent-web-web.service 2>/dev/null || true)
+    oauth_state=$(systemctl is-active agent-web-oauth.socket 2>/dev/null || true)
     http_code=$(curl -sk -o /dev/null -w '%{http_code}' \
         https://127.0.0.1:6901/vnc.html || true)
     ready=false
+    oauth_available=false
     if [[ "$browser_state" == active && "$novnc_state" == active && \
         "$web_state" == active && "$http_code" == 401 ]]; then
         ready=true
+    fi
+    if [[ "$oauth_state" == active && -S /run/agent-web-oauth/open.sock ]]; then
+        oauth_available=true
     fi
 
     cat <<EOF
@@ -151,9 +157,13 @@ HUMAN_URL=$(access_url)
 HUMAN_CONTROL_PROTOCOL=novnc
 AGENT_CONTROL_AVAILABLE=false
 AGENT_CONTROL_PROTOCOL=none
+OPENAI_OAUTH_BROWSER_AVAILABLE=$oauth_available
+OPENAI_OAUTH_BROWSER_PROTOCOL=agent-web-openai-oauth-v1
+OPENAI_OAUTH_BROWSER_SOCKET=/run/agent-web-oauth/open.sock
 BROWSER_SERVICE=$browser_state
 NOVNC_SERVICE=$novnc_state
 WEB_SERVICE=$web_state
+OAUTH_SOCKET=$oauth_state
 HTTPS_AUTH_CHECK=$http_code
 PROFILE_DIR=/var/lib/agent-web/profile
 DOWNLOAD_DIR=/var/lib/agent-web/downloads
